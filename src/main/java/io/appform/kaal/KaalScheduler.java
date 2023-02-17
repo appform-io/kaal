@@ -25,7 +25,9 @@ public class KaalScheduler<T extends KaalTask<T, R>, R> {
     private static final String HANDLER_NAME = "TASK_POLLER";
     private static final long DEFAULT_CHECK_DELAY = 1_000;
 
+    private final long pollingInterval;
     private final KaalTaskIdGenerator<T, R> taskIdGenerator;
+    private final KaalTaskStopStrategy<T,R> stopStrategy;
     private final ExecutorService executorService;
 
     private final PriorityBlockingQueue<KaalTaskData<T, R>> tasks
@@ -35,18 +37,24 @@ public class KaalScheduler<T extends KaalTask<T, R>, R> {
                                               log.debug("Execution time: {}", nextTime);
                                               return nextTime;
                                           }));
-    private final ScheduledSignal signalGenerator = ScheduledSignal.builder()
-            .errorHandler(e -> log.error("Error running scheduled poll: " + e.getMessage(), e))
-            .interval(Duration.ofMillis(DEFAULT_CHECK_DELAY))
-            .build();
+    private final ScheduledSignal signalGenerator;
 
     private final Set<String> deleted = new ConcurrentSkipListSet<>();
 
     private final ConsumingSyncSignal<KaalTaskData<T, R>> taskCompleted = new ConsumingSyncSignal<>();
 
-    public KaalScheduler(KaalTaskIdGenerator<T, R> taskIdGenerator, ExecutorService executorService) {
+    public KaalScheduler(
+            long pollingInterval, KaalTaskIdGenerator<T, R> taskIdGenerator,
+            KaalTaskStopStrategy<T, R> stopStrategy,
+            ExecutorService executorService) {
+        this.pollingInterval = pollingInterval;
         this.taskIdGenerator = taskIdGenerator;
         this.executorService = executorService;
+        this.stopStrategy = stopStrategy;
+        this.signalGenerator = ScheduledSignal.builder()
+                .errorHandler(e -> log.error("Error running scheduled poll: " + e.getMessage(), e))
+                .interval(Duration.ofMillis(pollingInterval))
+                .build();;
     }
 
     public void start() {
@@ -78,10 +86,10 @@ public class KaalScheduler<T extends KaalTask<T, R>, R> {
 
     public Optional<String> schedule(final T task, final Date currTime) {
         var delay = task.delayToNextRun(currTime);
-        if(delay < DEFAULT_CHECK_DELAY) {
+        if(delay < pollingInterval) {
             log.warn("Provided delay of {} ms readjusted to lowest possible delay of {} ms",
-                     delay, DEFAULT_CHECK_DELAY);
-            delay = DEFAULT_CHECK_DELAY;
+                     delay, pollingInterval);
+            delay = pollingInterval;
         }
         val executionTime = new Date(currTime.getTime() + delay);
         val runId = taskIdGenerator.generateId(task, executionTime);
@@ -109,6 +117,10 @@ public class KaalScheduler<T extends KaalTask<T, R>, R> {
         if(deleted.contains(taskId)) { //Will get hit if deleted during task execution
             log.debug("Looks like task {} has already been deleted .. no further scheduling necessary", taskId);
             deleted.remove(taskId);
+            return;
+        }
+        if(!stopStrategy.scheduleNext(taskData)) {
+            log.info("Task {} will not be scheduled further as stop strategy returned false", taskId);
             return;
         }
         val drift = taskData.drift();
