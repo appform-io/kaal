@@ -13,7 +13,7 @@ public class FailTask implements KaalTask<FailTask, Void> {
 
     @Override
     public long delayToNextRun(Date currentTime) {
-        return 2_000;
+        return 200;
     }
 
     @Override

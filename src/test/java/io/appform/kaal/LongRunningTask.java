@@ -27,7 +27,7 @@ public class LongRunningTask implements KaalTask<LongRunningTask, String> {
     public String apply(Date date, KaalTaskData<LongRunningTask, String> taskData) {
         started.set(true);
         try {
-            Thread.sleep(1000);
+            Thread.sleep(100);
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
