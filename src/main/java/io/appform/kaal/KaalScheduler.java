@@ -20,10 +20,9 @@ import java.util.concurrent.PriorityBlockingQueue;
  *
  */
 @Slf4j
-public class KaalScheduler<T extends KaalTask<T, R>, R> {
+public final class KaalScheduler<T extends KaalTask<T, R>, R> {
 
     private static final String HANDLER_NAME = "TASK_POLLER";
-    private static final long DEFAULT_CHECK_DELAY = 1_000;
 
     private final long pollingInterval;
     private final KaalTaskIdGenerator<T, R> taskIdGenerator;
@@ -43,8 +42,9 @@ public class KaalScheduler<T extends KaalTask<T, R>, R> {
 
     private final ConsumingSyncSignal<KaalTaskData<T, R>> taskCompleted = new ConsumingSyncSignal<>();
 
-    public KaalScheduler(
-            long pollingInterval, KaalTaskIdGenerator<T, R> taskIdGenerator,
+    KaalScheduler(
+            long pollingInterval,
+            KaalTaskIdGenerator<T, R> taskIdGenerator,
             KaalTaskStopStrategy<T, R> stopStrategy,
             ExecutorService executorService) {
         this.pollingInterval = pollingInterval;
@@ -54,7 +54,11 @@ public class KaalScheduler<T extends KaalTask<T, R>, R> {
         this.signalGenerator = ScheduledSignal.builder()
                 .errorHandler(e -> log.error("Error running scheduled poll: " + e.getMessage(), e))
                 .interval(Duration.ofMillis(pollingInterval))
-                .build();;
+                .build();
+    }
+
+    public static<T extends KaalTask<T, R>, R> KaalSchedulerBuilder<T,R> builder() {
+        return new KaalSchedulerBuilder<>();
     }
 
     public void start() {
