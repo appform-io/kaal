@@ -27,11 +27,12 @@ class KaalSchedulerTest {
     @SneakyThrows
     void testScheduler() {
         val called = new AtomicInteger();
-        val scheduler = new KaalScheduler<TestTask, String>(100,
-                                                            new RandomKaalTaskIdGenerator<>(),
-                                                            new KaalDefaultTaskStopStrategy<>(),
-                                                            Executors.newCachedThreadPool()
-        );
+        val scheduler = KaalScheduler.<TestTask, String>builder()
+                .withPollingInterval(0) //Will be set to 0
+                .withTaskIdGenerator(new RandomKaalTaskIdGenerator<>())
+                .withTaskStopStrategy(new KaalDefaultTaskStopStrategy<>())
+                .withExecutorService(Executors.newCachedThreadPool())
+                .build();
         scheduler.onTaskCompleted().connect(td -> {
             log.info("Result: {}", td.getResult());
             called.incrementAndGet();
@@ -62,10 +63,9 @@ class KaalSchedulerTest {
     @SneakyThrows
     void testSchedulerLowDelayTask() {
         val called = new AtomicInteger();
-        val scheduler = new KaalScheduler<TestTask, String>(100, new RandomKaalTaskIdGenerator<>(),
-                                                            new KaalDefaultTaskStopStrategy<>(),
-                                                            Executors.newCachedThreadPool()
-        );
+        val scheduler = KaalScheduler.<TestTask, String>builder()
+                .withPollingInterval(100)
+                .build();
         scheduler.onTaskCompleted().connect(td -> {
             log.info("Result: {}", td.getResult());
             called.incrementAndGet();
@@ -89,10 +89,9 @@ class KaalSchedulerTest {
     @SneakyThrows
     void testSchedulerLongRunningTaskDelete() {
         val called = new AtomicInteger();
-        val scheduler = new KaalScheduler<LongRunningTask, String>(100, new RandomKaalTaskIdGenerator<>(),
-                                                                   new KaalDefaultTaskStopStrategy<>(),
-                                                                   Executors.newCachedThreadPool()
-        );
+        val scheduler = KaalScheduler.<LongRunningTask, String>builder()
+                .withPollingInterval(100)
+                .build();
         scheduler.onTaskCompleted().connect(td -> {
             log.info("Result: {}", td.getResult());
             called.incrementAndGet();
@@ -116,12 +115,11 @@ class KaalSchedulerTest {
     @SneakyThrows
     void testSchedulerTaskException() {
         val called = new AtomicInteger();
-        val scheduler = new KaalScheduler<FailTask, Void>(100, new RandomKaalTaskIdGenerator<>(),
-                                                          new KaalDefaultTaskStopStrategy<>(),
-                                                          Executors.newCachedThreadPool()
-        );
+        val scheduler = KaalScheduler.<FailTask, Void>builder()
+                .withPollingInterval(100)
+                .build();
         scheduler.onTaskCompleted().connect(td -> {
-            if(null != td.getException()) {
+            if (null != td.getException()) {
                 log.info("Failure: {}", td.getException().getMessage());
                 called.incrementAndGet();
             }
@@ -146,10 +144,9 @@ class KaalSchedulerTest {
         val called = IntStream.range(0, 10)
                 .mapToObj(i -> new AtomicInteger())
                 .toList();
-        val scheduler = new KaalScheduler<TestTask, String>(100, new RandomKaalTaskIdGenerator<>(),
-                                                            new KaalDefaultTaskStopStrategy<>(),
-                                                            Executors.newCachedThreadPool()
-        );
+        val scheduler = KaalScheduler.<TestTask, String>builder()
+                .withPollingInterval(100)
+                .build();
         scheduler.onTaskCompleted().connect(td -> {
             log.info("Result: {}", td.getResult());
             called.get(td.getTask().getIndex()).incrementAndGet();
@@ -176,10 +173,10 @@ class KaalSchedulerTest {
     @SneakyThrows
     void testSchedulerCustomStopStrategy() {
         val called = new AtomicInteger(0);
-        val scheduler = new KaalScheduler<TestTask, String>(100, new RandomKaalTaskIdGenerator<>(),
-                                                            taskData -> called.get() < 2,
-                                                            Executors.newCachedThreadPool()
-        ); //Will stop after 2 runs
+        val scheduler = KaalScheduler.<TestTask, String>builder()
+                .withPollingInterval(100)
+                .withTaskStopStrategy(taskData -> called.get() < 2)  //Will stop after 2 runs
+                .build();
         scheduler.onTaskCompleted().connect(td -> {
             log.info("Result: {}", td.getResult());
             called.incrementAndGet();
