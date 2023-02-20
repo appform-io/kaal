@@ -94,6 +94,11 @@ public final class KaalScheduler<T extends KaalTask<T, R>, R> {
             log.info("Received negative delay, will not schedule a run for the task {}", task.id());
             return Optional.empty();
         }
+        if (delay < pollingInterval) {
+            log.warn("Provided delay of {} ms readjusted to lowest possible delay of {} ms",
+                     delay, pollingInterval);
+            delay = pollingInterval;
+        }
         val executionTime = new Date(currTime.getTime() + delay);
         val runId = taskIdGenerator.generateId(task, executionTime);
         return schedule(task, currTime, executionTime, runId, delay);
