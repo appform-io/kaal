@@ -42,7 +42,7 @@ public class KaalSchedulerBuilder <T extends KaalTask<T, R>, R> {
 
     public KaalScheduler<T,R> build() {
         return new KaalScheduler<>(pollingInterval <= 0 ? DEFAULT_CHECK_DELAY : pollingInterval,
-                                   Objects.requireNonNullElseGet(taskIdGenerator, RandomKaalTaskIdGenerator::new),
+                                   Objects.requireNonNullElseGet(taskIdGenerator, KaalRandomTaskIdGenerator::new),
                                    Objects.requireNonNullElseGet(stopStrategy, KaalDefaultTaskStopStrategy::new),
                                    Objects.requireNonNullElseGet(executorService, Executors::newCachedThreadPool));
     }

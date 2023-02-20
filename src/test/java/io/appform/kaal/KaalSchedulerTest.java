@@ -29,7 +29,7 @@ class KaalSchedulerTest {
         val called = new AtomicInteger();
         val scheduler = KaalScheduler.<TestTask, String>builder()
                 .withPollingInterval(0) //Will be set to 0
-                .withTaskIdGenerator(new RandomKaalTaskIdGenerator<>())
+                .withTaskIdGenerator(new KaalRandomTaskIdGenerator<>())
                 .withTaskStopStrategy(new KaalDefaultTaskStopStrategy<>())
                 .withExecutorService(Executors.newCachedThreadPool())
                 .build();
