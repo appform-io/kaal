@@ -6,7 +6,7 @@ import java.util.function.BiFunction;
 /**
  *
  */
-public interface KaalTask<TT extends KaalTask<TT, R>, R> extends BiFunction<Date, KaalTaskData<TT, R>, R> {
+public interface KaalTask<T extends KaalTask<T, R>, R> extends BiFunction<Date, KaalTaskData<T, R>, R> {
     String id();
 
     long delayToNextRun(Date currentTime);
