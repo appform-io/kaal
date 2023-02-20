@@ -10,4 +10,5 @@ public interface KaalTask<TT extends KaalTask<TT, R>, R> extends BiFunction<Date
     String id();
 
     long delayToNextRun(Date currentTime);
+
 }
