@@ -7,6 +7,8 @@
     <groupId>io.appform.kaal</groupId>
     <artifactId>kaal</artifactId>
     <version>1.0.0</version>
+    <name>Kaal</name>
+    <url>https://github.com/appform-io/kaal</url>
     <description>An embedded chronologically triggered job scheduler</description>
     <inceptionYear>2023</inceptionYear>
     <scm>
@@ -221,6 +223,14 @@
                 <configuration>
                     <source>17</source>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

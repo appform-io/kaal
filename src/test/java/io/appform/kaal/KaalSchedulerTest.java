@@ -29,7 +29,7 @@ class KaalSchedulerTest {
         val called = new AtomicInteger();
         val scheduler = KaalScheduler.<TestTask, String>builder()
                 .withPollingInterval(0) //Will be set to 0
-                .withTaskIdGenerator(new KaalRandomTaskIdGenerator<>())
+                .withTaskIdGenerator(new KaalRandomTaskRunIdGenerator<>())
                 .withTaskStopStrategy(new KaalDefaultTaskStopStrategy<>())
                 .withExecutorService(Executors.newCachedThreadPool())
                 .build();
@@ -186,6 +186,32 @@ class KaalSchedulerTest {
         val task = new TestTask(0, delayMs);
         assertTrue(scheduler.schedule(task).isPresent());
         val future = Date.from(Instant.now().plus(500, ChronoUnit.MILLIS));
+
+        await()
+                .forever()
+                .until(() -> new Date().after(future));
+        assertEquals(2, called.get()); //2 executions have happened even though we've waited for long
+
+        scheduler.stop();
+    }
+
+    @Test
+    @SneakyThrows
+    void testScheduleNow() {
+        val called = new AtomicInteger(0);
+        val scheduler = KaalScheduler.<TestTask, String>builder()
+                .withPollingInterval(100)
+                .withTaskStopStrategy(taskData -> called.get() < 2)  //Will stop after 2 runs
+                .build();
+        scheduler.onTaskCompleted().connect(td -> {
+            log.info("Result: {}", td.getResult());
+            called.incrementAndGet();
+        });
+        scheduler.start();
+        val delayMs = 100;
+        val task = new TestTask(0, delayMs);
+        assertTrue(scheduler.scheduleNow(task, new Date()).isPresent());
+        val future = Date.from(Instant.now().plus(300, ChronoUnit.MILLIS));
 
         await()
                 .forever()
