@@ -12,40 +12,33 @@
  * under the License.
  */
 
-package io.appform.kaal;
+package io.appform.kaal.example;
 
-import lombok.Getter;
+import io.appform.kaal.KaalTask;
+import io.appform.kaal.KaalTaskData;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- *
+ * Sample task that runs every one second and returns the invocation time as the result
  */
-public class LongRunningTask implements KaalTask<LongRunningTask, String> {
+@Slf4j
+public class SampleTask implements KaalTask<SampleTask, Date> {
 
-    @Getter
-    private final AtomicBoolean started = new AtomicBoolean();
     @Override
     public String id() {
-        return "LONG_TASK";
+        return "SAMPLE_TASK"; //Fixed ID for the task
     }
 
     @Override
     public long delayToNextRun(Date currentTime) {
-        return 2_000;
+        return 1_000; //Task runs every one second
     }
 
     @Override
-    @SuppressWarnings("java:S2925")
-    public String apply(Date date, KaalTaskData<LongRunningTask, String> taskData) {
-        started.set(true);
-        try {
-            Thread.sleep(100);
-        }
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        return taskData.getRunId();
+    public Date apply(Date date, KaalTaskData<SampleTask, Date> sampleTaskDateKaalTaskData) {
+        log.info("Sample task invoked");
+        return date; //Just return the invocation date as the task result.
     }
 }

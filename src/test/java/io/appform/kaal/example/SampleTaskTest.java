@@ -12,20 +12,30 @@
  * under the License.
  */
 
-package io.appform.kaal;
+package io.appform.kaal.example;
 
-import java.util.Date;
+import lombok.val;
+import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
+
+import static org.awaitility.Awaitility.await;
 
 /**
- * Generates run id for a task run
+ * Driver test for code sample
  */
-public interface KaalTaskRunIdGenerator<T extends KaalTask<T, R>, R> {
+class SampleTaskTest {
 
-    /**
-     * Return a unique Id for a task run
-     * @param task reference to the task being run
-     * @param executionTime time at which task is supposed to be executed
-     * @return A unique string id for this run
-     */
-    String generateId(final T task, Date executionTime);
+    @Test
+    void sampleTest() {
+        val runner = new SampleTaskRunner();
+        runner.start();
+        try {
+            runner.run();
+            await().atMost(Duration.ofSeconds(15)).until(runner::done);
+        }
+        finally {
+            runner.stop();
+        }
+    }
 }
