@@ -12,20 +12,25 @@
  * under the License.
  */
 
-package io.appform.kaal;
+package io.appform.kaal.example;
+
+import io.appform.kaal.KaalTaskData;
+import io.appform.kaal.KaalTaskStopStrategy;
+import lombok.Getter;
 
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Generates run id for a task run
+ * Allows execution for only 10 iterations
  */
-public interface KaalTaskRunIdGenerator<T extends KaalTask<T, R>, R> {
+public class CountingStopStrategy implements KaalTaskStopStrategy<SampleTask, Date> {
 
-    /**
-     * Return a unique Id for a task run
-     * @param task reference to the task being run
-     * @param executionTime time at which task is supposed to be executed
-     * @return A unique string id for this run
-     */
-    String generateId(final T task, Date executionTime);
+    @Getter
+    private final AtomicInteger executionCount = new AtomicInteger();
+
+    @Override
+    public boolean scheduleNext(KaalTaskData<SampleTask, Date> taskData) {
+        return executionCount.incrementAndGet() < 10;
+    }
 }
