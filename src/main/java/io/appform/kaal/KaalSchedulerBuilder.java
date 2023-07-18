@@ -32,6 +32,7 @@ public class KaalSchedulerBuilder <T extends KaalTask<T, R>, R> {
     private long pollingInterval = DEFAULT_CHECK_DELAY;
     private KaalTaskRunIdGenerator<T, R> taskIdGenerator;
     private KaalTaskStopStrategy<T,R> stopStrategy;
+    private KaalTaskRetryStrategy<T,R> retryStrategy;
     private ExecutorService executorService;
 
     /**
@@ -64,6 +65,11 @@ public class KaalSchedulerBuilder <T extends KaalTask<T, R>, R> {
         return this;
     }
 
+    public KaalSchedulerBuilder<T,R> withTaskRetryStrategy(final KaalTaskRetryStrategy<T,R> retryStrategy) {
+        this.retryStrategy = retryStrategy;
+        return this;
+    }
+
     /**
      * Executor service to be used to execute a task. If not provided an unbounded cached thread pool is used.
      * @param executorService Custom executor service.
@@ -82,6 +88,7 @@ public class KaalSchedulerBuilder <T extends KaalTask<T, R>, R> {
         return new KaalScheduler<>(pollingInterval <= 0 ? DEFAULT_CHECK_DELAY : pollingInterval,
                                    Objects.requireNonNullElseGet(taskIdGenerator, KaalRandomTaskRunIdGenerator::new),
                                    Objects.requireNonNullElseGet(stopStrategy, KaalDefaultTaskStopStrategy::new),
+                                   Objects.requireNonNullElseGet(retryStrategy, KaalDefaultTaskRetryStrategy::new),
                                    Objects.requireNonNullElseGet(executorService, Executors::newCachedThreadPool));
     }
 }
