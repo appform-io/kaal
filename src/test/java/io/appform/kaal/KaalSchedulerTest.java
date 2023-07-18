@@ -224,7 +224,7 @@ class KaalSchedulerTest {
         scheduler.start();
         val delayMs = 100;
         val task = new TestTask(0, delayMs);
-        assertTrue(scheduler.scheduleNow(task, new Date()).isPresent());
+        assertTrue(scheduler.scheduleAt(task, new Date()).isPresent());
         val future = Date.from(Instant.now().plus(300, ChronoUnit.MILLIS));
 
         await()

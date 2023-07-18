@@ -6,7 +6,7 @@
 
     <groupId>io.appform.kaal</groupId>
     <artifactId>kaal</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <name>Kaal</name>
     <url>https://github.com/appform-io/kaal</url>
     <description>An embedded chronologically triggered job scheduler</description>

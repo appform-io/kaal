@@ -179,9 +179,20 @@ public final class KaalScheduler<T extends KaalTask<T, R>, R> {
      * @param currTime Time for first run.
      * @return Returns id for first run
      */
-    public Optional<String> scheduleNow(final T task, final Date currTime) {
+    public Optional<String> scheduleAt(final T task, final Date currTime) {
         val runId = taskIdGenerator.generateId(task, currTime);
         return schedule(task, currTime, runId);
+    }
+
+
+    /**
+     * Schedule a task with the first run to be executed right now. Subsequent runs and run conditions as well as
+     * run ids for them will proceed in the usual manner.
+     * @param task  Task to be scheduled. Must inherit from {@link KaalTask}
+     * @return Returns id for first run
+     */
+    public Optional<String> scheduleNow(final T task) {
+        return scheduleAt(task, new Date());
     }
 
     /**
