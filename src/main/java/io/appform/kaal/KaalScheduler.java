@@ -53,6 +53,7 @@ public final class KaalScheduler<T extends KaalTask<T, R>, R> {
     private final long pollingInterval;
     private final KaalTaskRunIdGenerator<T, R> taskIdGenerator;
     private final KaalTaskStopStrategy<T, R> stopStrategy;
+    private final KaalTaskRetryStrategy<T, R> retryStrategy;
     private final ExecutorService executorService;
 
     private final PriorityBlockingQueue<KaalTaskData<T, R>> tasks
@@ -70,11 +71,11 @@ public final class KaalScheduler<T extends KaalTask<T, R>, R> {
 
     KaalScheduler(
             long pollingInterval,
-            KaalTaskRunIdGenerator<T, R> taskIdGenerator,
-            KaalTaskStopStrategy<T, R> stopStrategy,
-            ExecutorService executorService) {
+            KaalTaskRunIdGenerator<T, R> taskIdGenerator, KaalTaskStopStrategy<T, R> stopStrategy,
+            KaalTaskRetryStrategy<T, R> retryStrategy, ExecutorService executorService) {
         this.pollingInterval = pollingInterval;
         this.taskIdGenerator = taskIdGenerator;
+        this.retryStrategy = retryStrategy;
         this.executorService = executorService;
         this.stopStrategy = stopStrategy;
         this.signalGenerator = ScheduledSignal.builder()
@@ -229,10 +230,16 @@ public final class KaalScheduler<T extends KaalTask<T, R>, R> {
             log.info("Task run {}/{} is now complete.", taskId, taskData.getRunId());
         }
         else {
-            log.warn("Task run {}/{} is now complete with error: {}",
-                     taskId,
-                     taskData.getRunId(),
-                     errorMessage(taskData.getException()));
+            String errorMessage = errorMessage(taskData.getException());
+            if(retryStrategy.shouldRetry(taskData)) {
+                log.warn("Task run {}/{} failed with error: {}, Retrying task execution right away", taskId, taskData.getRunId(), errorMessage);
+                scheduleNow(taskData.getTask());
+                return;
+            }
+            else {
+                log.warn("Task run {}/{} is now complete with error: {}", taskId, taskData.getRunId(),
+                        errorMessage(taskData.getException()));
+            }
         }
         if (deleted.contains(taskId)) { //Will get hit if deleted during task execution
             log.debug("Looks like task {} has already been deleted .. no further scheduling necessary", taskId);

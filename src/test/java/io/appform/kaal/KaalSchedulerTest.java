@@ -45,6 +45,7 @@ class KaalSchedulerTest {
                 .withPollingInterval(0) //Will be set to 0
                 .withTaskIdGenerator(new KaalRandomTaskRunIdGenerator<>())
                 .withTaskStopStrategy(new KaalDefaultTaskStopStrategy<>())
+                .withTaskRetryStrategy(new KaalDefaultTaskRetryStrategy<>())
                 .withExecutorService(Executors.newCachedThreadPool())
                 .build();
         scheduler.onTaskCompleted().connect(td -> {
@@ -205,6 +206,34 @@ class KaalSchedulerTest {
                 .forever()
                 .until(() -> new Date().after(future));
         assertEquals(2, called.get()); //2 executions have happened even though we've waited for long
+
+        scheduler.stop();
+    }
+
+    @Test
+    @SneakyThrows
+    void testSchedulerCustomRetryStrategy() {
+        val called = new AtomicInteger();
+        val scheduler = KaalScheduler.<FailTask, Void>builder()
+                .withPollingInterval(100)
+                .withTaskRetryStrategy(taskData -> true)
+                .build();
+        scheduler.onTaskCompleted().connect(td -> {
+            if (null != td.getException()) {
+                log.info("Failure: {}, called: {}", td.getException().getMessage(), called.get());
+                called.incrementAndGet();
+            }
+        });
+        scheduler.start();
+        val task = new FailTask();
+        assertTrue(scheduler.schedule(task).isPresent());
+
+        await()
+                .forever()
+                .pollInterval(Duration.ofMillis(100))
+                .until(() -> called.get() == 3);
+        scheduler.delete(task.id());
+        assertEquals(3, called.get()); //3 retries have happened
 
         scheduler.stop();
     }
